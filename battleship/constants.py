@@ -1,5 +1,3 @@
-from typing import Tuple, List
-
 CARRIER = "Carrier"
 BATTLESHIP = "Battleship"
 CRUISER = "Cruiser"
@@ -44,6 +42,4 @@ FLEETS = {
 SHIP_SLOT = "0"
 WATER_SLOT = " "
 HIT_SLOT = "X"
-
-Board = List[List[str]]
-Slot = Tuple[int, int]
+BOARD_SIZE = 10

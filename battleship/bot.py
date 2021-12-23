@@ -1,13 +1,12 @@
 import random
-from typing import Tuple
 
-from battleship.board import Board
-from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS
+from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS, BOARD_SIZE
+from battleship.player import Player
 from battleship.ship import Ship
 
 
 def random_slot():
-    return random.randint(0, 10), random.randint(0, 10)
+    return random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
 
 
 def random_placement():
@@ -16,10 +15,9 @@ def random_placement():
     return row, column, orientation
 
 
-class Bot:
+class Bot(Player):
     def __init__(self):
-        self.board = Board()
-        self.guesses = []
+        super(Bot, self).__init__()
 
     def place_ships(self):
         fleet = FLEETS[random.choice([FLEET_ONE, FLEET_TWO])]
@@ -35,22 +33,14 @@ class Bot:
 
                 ship = Ship(ship_name, ship_size, ship_slots)
                 if self.board.check_ship_slots(ship):
-                    self.board.place_ship(ship)
+                    self.add_ship(ship)
                     amount -= 1
-
-    def print_board(self):
-        self.board.print_board()
-
-    def hit_slot(self, row, col):
-        return self.board.hit_slot(row, col)
-
-    def lost(self):
-        return self.board.lost()
 
     def random_hit(self):
         slot = random_slot()
         if slot in self.guesses:
             return self.random_hit()
+        self.add_guess(slot)
         return slot
 
     def guess(self):
@@ -60,11 +50,7 @@ class Bot:
 class SmartBot(Bot):
     def __init__(self):
         super(SmartBot, self).__init__()
-        self.hits = []
-        self.slots_scores = [[0]*10 for _ in range(10)]
-
-    def add_hit(self, hit: Tuple[int, int]):
-        self.hits.append(hit)
+        self.slots_scores = [[0]*BOARD_SIZE for _ in range(BOARD_SIZE)]
 
     def calc_scores(self):
         for row, col in self.hits:
@@ -72,10 +58,11 @@ class SmartBot(Bot):
 
         for row, col in self.guesses:
             if not (row, col) in self.hits:
+                print(row, col)
                 self.slots_scores[row][col] = -2
 
-        for row in range(10):
-            for col in range(10):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 if self.slots_scores[row][col] == -1 or self.slots_scores[row][col] == -2:
                     continue
 
@@ -86,21 +73,21 @@ class SmartBot(Bot):
                     self.slots_scores[row][col] = -2
 
     def check_diagonal(self, row, col):
-        return (0 <= row - 1 < 10 and 0 <= col - 1 < 10 and self.slots_scores[row - 1][col - 1] == -1) or \
-                (0 <= row - 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row - 1][col + 1] == -1) or \
-                (0 <= row + 1 < 10 and 0 <= col - 1 < 10 and self.slots_scores[row + 1][col - 1] == -1) or \
-                (0 <= row + 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row + 1][col + 1] == -1)
+        return (0 <= row - 1 < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row - 1][col - 1] == -1) or \
+                (0 <= row - 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row - 1][col + 1] == -1) or \
+                (0 <= row + 1 < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row + 1][col - 1] == -1) or \
+                (0 <= row + 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row + 1][col + 1] == -1)
 
     def check_across(self, row, col):
-        return (0 <= row - 1 < 10 and 0 <= col < 10 and self.slots_scores[row - 1][col] == -1) or \
-               (0 <= row < 10 and 0 <= col + 1 < 10 and self.slots_scores[row][col + 1] == -1) or \
-               (0 <= row + 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row + 1][col] == -1) or \
-               (0 <= row < 10 and 0 <= col - 1 < 10 and self.slots_scores[row][col - 1] == -1)
+        return (0 <= row - 1 < BOARD_SIZE and 0 <= col < BOARD_SIZE and self.slots_scores[row - 1][col] == -1) or \
+               (0 <= row < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row][col + 1] == -1) or \
+               (0 <= row + 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row + 1][col] == -1) or \
+               (0 <= row < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row][col - 1] == -1)
 
     def get_highscores(self):
         highscores = []
-        for row in range(10):
-            for col in range(10):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 if self.slots_scores[row][col] == 5:
                     highscores.append((row, col))
         return highscores
@@ -113,7 +100,12 @@ class SmartBot(Bot):
             highscores = self.get_highscores()
             print(highscores)
             self.print_scores()
-            slot = random.choice(highscores)
+            if highscores:
+                slot = random.choice(highscores)
+            else:
+                slot = self.random_hit()
+
+        self.add_guess(slot)
         return slot
 
     def print_scores(self):

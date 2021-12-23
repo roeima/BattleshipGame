@@ -20,14 +20,18 @@ class Player:
     def get_guess(self):
         return self.guesses
 
+    def in_guesses(self, guess: Tuple[int, int]):
+        return guess in self.guesses
+
     def hit_slot(self, slot: Tuple[int, int]):
         row, col = slot
         if self.board.hit_slot(row, col):
             for ship in self.ships.copy():
                 if slot in ship.get_slots():
                     ship.hit_slot(slot)
-                    if not ship.is_alive():
-                        self.remove_ship(ship)
+            return True
+        else:
+            return False
 
     def remove_ship(self, ship: Ship):
         self.ships.remove(ship)
@@ -37,5 +41,11 @@ class Player:
             self.board.place_ship(ship)
             self.ships.append(ship)
 
-    def add_hit(self, hit):
+    def add_hit(self, hit: Tuple[int, int]):
         self.hits.append(hit)
+
+    def print_board(self):
+        self.board.print_board()
+
+    def get_ships(self):
+        return self.ships
