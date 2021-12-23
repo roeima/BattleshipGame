@@ -15,7 +15,7 @@ class BattleShipGame:
         self.is_running = True
         self.difficulty = EASY
         self.gamemode = SINGLE_PLAYER
-        self.player = Bot()
+        self.player = Player()
         self.current_player = self.player
         self.other_player = None
 
