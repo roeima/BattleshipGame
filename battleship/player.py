@@ -1,5 +1,3 @@
-import json
-import socket
 from typing import Tuple, List
 
 from battleship.board import Board

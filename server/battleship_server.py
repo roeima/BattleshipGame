@@ -105,6 +105,9 @@ def start_game(players: List[NetPlayer]):
         hit, ship_down = players[other_player].hit_slot((row, col))
 
         if hit:
+            player.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
+            other.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
+
             if ship_down[0]:
                 player.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
                 other.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
