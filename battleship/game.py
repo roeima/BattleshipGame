@@ -82,7 +82,11 @@ class BattleShipGame:
 
     def _run_multiplayer(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((SERVER_HOST, SERVER_PORT))
+            try:
+                s.connect((SERVER_HOST, SERVER_PORT))
+            except ConnectionRefusedError as e:
+                print("Server is DOWN")
+                return
             while self.is_running:
                 data = s.recv(2048)
                 s.send(self.parse_message(data))
