@@ -6,7 +6,6 @@ from battleship.ship import Ship
 class Board:
     def __init__(self):
         self._board: List[List[int]] = [[WATER_SLOT]*10 for _ in range(10)]
-        self.ships: List[Ship] = []
 
     def print_board(self):
         numbers_row = "----0---1---2---3---4---5---6---7---8---9--"
@@ -45,7 +44,6 @@ class Board:
         return True
 
     def place_ship(self, ship: Ship):
-        self.ships.append(ship)
         ship_slots = ship.get_slots()
         for row, col in ship_slots:
             self._board[row][col] = SHIP_SLOT
@@ -53,21 +51,9 @@ class Board:
     def hit_slot(self, row: int, col: int):
         if 0 <= row < 10 and 0 <= col < 10:
             if self._board[row][col] == SHIP_SLOT:
-                for ship in self.ships:
-                    if (row, col) in ship.get_slots():
-                        ship.hit_slot((row, col))
                 self._board[row][col] = HIT_SLOT
                 return True
             elif self._board[row][col] == HIT_SLOT or self._board[row][col] == WATER_SLOT:
                 return False
         else:
             return False
-
-    def get_ships(self):
-        return self.ships
-
-    def remove_ship(self, ship: Ship):
-        self.ships.remove(ship)
-
-    def lost(self):
-        return len(self.ships) == 0
