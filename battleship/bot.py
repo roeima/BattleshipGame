@@ -3,21 +3,12 @@ import random
 from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS, BOARD_SIZE
 from battleship.player import Player
 from battleship.ship import Ship
-
-
-def random_slot():
-    return random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
-
-
-def random_placement():
-    row, column = random_slot()
-    orientation = random.choice([HORIZONTAL, VERTICAL])
-    return row, column, orientation
+from battleship.utils import random_placement, random_slot
 
 
 class Bot(Player):
     def __init__(self):
-        super(Bot, self).__init__()
+        super(Bot, self).__init__("BOT")
 
     def place_ships(self):
         fleet = FLEETS[random.choice([FLEET_ONE, FLEET_TWO])]
@@ -58,7 +49,6 @@ class SmartBot(Bot):
 
         for row, col in self.guesses:
             if not (row, col) in self.hits:
-                print(row, col)
                 self.slots_scores[row][col] = -2
 
         for row in range(BOARD_SIZE):
@@ -98,8 +88,6 @@ class SmartBot(Bot):
         else:
             self.calc_scores()
             highscores = self.get_highscores()
-            print(highscores)
-            self.print_scores()
             if highscores:
                 slot = random.choice(highscores)
             else:

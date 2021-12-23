@@ -43,3 +43,29 @@ SHIP_SLOT = "0"
 WATER_SLOT = " "
 HIT_SLOT = "X"
 BOARD_SIZE = 10
+
+EASY = "EASY"
+HARD = "HARD"
+
+SINGLE_PLAYER = "SINGLE"
+MULTI_PLAYER = "MULTI"
+
+PLAYER = "player"
+OTHER = "other"
+
+
+GAMEMODE_STR =\
+"""
+Which game mode do you want to play:
+1. Single Player
+2. MultiPlayer
+
+choose gamemode ---> """
+
+DIFFICULTY_STR =\
+"""
+Choose Difficulty:
+1. EASY
+2. HARD
+
+enter difficulty (1/2) ---> """
