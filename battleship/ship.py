@@ -18,6 +18,3 @@ class Ship:
 
     def __repr__(self):
         return f"Ship({self.name}, {self.size}, {self.slots})"
-
-
-

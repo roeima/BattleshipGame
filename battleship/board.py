@@ -1,11 +1,11 @@
-from typing import List, Tuple
-from battleship.constants import WATER_SLOT, SHIP_SLOT, HIT_SLOT
+from typing import List
+from battleship.constants import WATER_SLOT, SHIP_SLOT, HIT_SLOT, BOARD_SIZE
 from battleship.ship import Ship
 
 
 class Board:
     def __init__(self):
-        self._board: List[List[int]] = [[WATER_SLOT]*10 for _ in range(10)]
+        self._board: List[List[int]] = [[WATER_SLOT]*BOARD_SIZE for _ in range(BOARD_SIZE)]
 
     def print_board(self):
         numbers_row = "----0---1---2---3---4---5---6---7---8---9--"
@@ -49,7 +49,7 @@ class Board:
             self._board[row][col] = SHIP_SLOT
 
     def hit_slot(self, row: int, col: int):
-        if 0 <= row < 10 and 0 <= col < 10:
+        if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
             if self._board[row][col] == SHIP_SLOT:
                 self._board[row][col] = HIT_SLOT
                 return True

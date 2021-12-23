@@ -1,12 +1,12 @@
 import random
 
-from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS
+from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS, BOARD_SIZE
 from battleship.player import Player
 from battleship.ship import Ship
 
 
 def random_slot():
-    return random.randint(0, 9), random.randint(0, 9)
+    return random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
 
 
 def random_placement():
@@ -50,7 +50,7 @@ class Bot(Player):
 class SmartBot(Bot):
     def __init__(self):
         super(SmartBot, self).__init__()
-        self.slots_scores = [[0]*10 for _ in range(10)]
+        self.slots_scores = [[0]*BOARD_SIZE for _ in range(BOARD_SIZE)]
 
     def calc_scores(self):
         for row, col in self.hits:
@@ -61,8 +61,8 @@ class SmartBot(Bot):
                 print(row, col)
                 self.slots_scores[row][col] = -2
 
-        for row in range(10):
-            for col in range(10):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 if self.slots_scores[row][col] == -1 or self.slots_scores[row][col] == -2:
                     continue
 
@@ -73,21 +73,21 @@ class SmartBot(Bot):
                     self.slots_scores[row][col] = -2
 
     def check_diagonal(self, row, col):
-        return (0 <= row - 1 < 10 and 0 <= col - 1 < 10 and self.slots_scores[row - 1][col - 1] == -1) or \
-                (0 <= row - 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row - 1][col + 1] == -1) or \
-                (0 <= row + 1 < 10 and 0 <= col - 1 < 10 and self.slots_scores[row + 1][col - 1] == -1) or \
-                (0 <= row + 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row + 1][col + 1] == -1)
+        return (0 <= row - 1 < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row - 1][col - 1] == -1) or \
+                (0 <= row - 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row - 1][col + 1] == -1) or \
+                (0 <= row + 1 < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row + 1][col - 1] == -1) or \
+                (0 <= row + 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row + 1][col + 1] == -1)
 
     def check_across(self, row, col):
-        return (0 <= row - 1 < 10 and 0 <= col < 10 and self.slots_scores[row - 1][col] == -1) or \
-               (0 <= row < 10 and 0 <= col + 1 < 10 and self.slots_scores[row][col + 1] == -1) or \
-               (0 <= row + 1 < 10 and 0 <= col + 1 < 10 and self.slots_scores[row + 1][col] == -1) or \
-               (0 <= row < 10 and 0 <= col - 1 < 10 and self.slots_scores[row][col - 1] == -1)
+        return (0 <= row - 1 < BOARD_SIZE and 0 <= col < BOARD_SIZE and self.slots_scores[row - 1][col] == -1) or \
+               (0 <= row < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row][col + 1] == -1) or \
+               (0 <= row + 1 < BOARD_SIZE and 0 <= col + 1 < BOARD_SIZE and self.slots_scores[row + 1][col] == -1) or \
+               (0 <= row < BOARD_SIZE and 0 <= col - 1 < BOARD_SIZE and self.slots_scores[row][col - 1] == -1)
 
     def get_highscores(self):
         highscores = []
-        for row in range(10):
-            for col in range(10):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
                 if self.slots_scores[row][col] == 5:
                     highscores.append((row, col))
         return highscores
