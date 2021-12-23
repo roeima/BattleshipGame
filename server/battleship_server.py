@@ -61,13 +61,20 @@ class NetPlayer:
                 "msg": msg
             }
         )
-        self.conn.send(message.encode())
-        return json.loads(self.conn.recv(2048).decode())
+        try:
+            self.conn.send(message.encode())
+            return json.loads(self.conn.recv(2048).decode())
+        except Exception as e:
+            print(f"{self.addr} disconnected from the server")
 
     def send_action(self, action):
-        self.conn.send(action.encode())
-        result = json.loads(self.conn.recv(2048).decode())
-        return self.parse_result(result)
+        try:
+            self.conn.send(action.encode())
+            result = json.loads(self.conn.recv(2048).decode())
+            return self.parse_result(result)
+        except Exception as e:
+            print(f"{self.addr} disconnected from the server")
+            raise DisconnectedException
 
     def parse_result(self, result):
         if 'action' in result:
@@ -87,6 +94,10 @@ class NetPlayer:
                 return result['msg']
 
 
+class DisconnectedException(Exception):
+    pass
+
+
 def start_game(players: List[NetPlayer]):
     print("started")
     running = True
@@ -100,29 +111,42 @@ def start_game(players: List[NetPlayer]):
         player = players[current_player]
         other = players[other_player]
 
-        row, col = player.guess()
+        try:
+            row, col = player.guess()
 
-        hit, ship_down = players[other_player].hit_slot((row, col))
+            hit, ship_down = players[other_player].hit_slot((row, col))
 
-        if hit:
-            player.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
-            other.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
+            if hit:
+                player.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
+                other.send_result(f"{player.name} [{player.addr}] tried to hit ({row}, {col}) and hit a ship")
 
-            if ship_down[0]:
-                player.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
-                other.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
-        else:
-            player.send_result(f"{player.name} [{player.addr}] tried to hit ({row},{col}) and missed")
-            other.send_result(f"{player.name} [{player.addr}] tried to hit ({row},{col}) and missed")
+                if ship_down[0]:
+                    player.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
+                    other.send_result(f"{player.name} [{player.addr}] destroyed {ship_down[1]}")
+            else:
+                player.send_result(f"{player.name} [{player.addr}] tried to hit ({row},{col}) and missed")
+                other.send_result(f"{player.name} [{player.addr}] tried to hit ({row},{col}) and missed")
 
-        if player.lost():
-            player.send_result(f"{other.name} [{other.addr}] WON!!")
-            other.send_result(f"{other.name} [{other.addr}] WON!!")
-            player.end_game()
-            other.end_game()
+            if player.lost():
+                player.send_result(f"{other.name} [{other.addr}] WON!!")
+                other.send_result(f"{other.name} [{other.addr}] WON!!")
+                player.end_game()
+                other.end_game()
+                running = False
+        except DisconnectedException:
             running = False
-
+            for player in players:
+                try:
+                    player.conn.close()
+                except Exception as e:
+                    continue
         current_player, other_player = other_player, current_player
+
+    for player in players:
+        try:
+            player.conn.close()
+        except Exception as e:
+            continue
 
 
 class Server:
