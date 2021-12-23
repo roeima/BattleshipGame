@@ -15,7 +15,7 @@ class BattleShipGame:
         self.is_running = True
         self.difficulty = EASY
         self.gamemode = SINGLE_PLAYER
-        self.player = Player()
+        self.player = Bot()
         self.current_player = self.player
         self.other_player = None
 
@@ -88,8 +88,12 @@ class BattleShipGame:
                 print("Server is DOWN")
                 return
             while self.is_running:
-                data = s.recv(2048)
-                s.send(self.parse_message(data))
+                try:
+                    data = s.recv(2048)
+                    s.send(self.parse_message(data))
+                except Exception as e:
+                    print("Error while connecting to server")
+                    return
 
     def parse_message(self, message_to_parse):
         message = json.loads(message_to_parse.decode())
