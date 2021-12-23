@@ -1,10 +1,12 @@
+import json
+import socket
 from typing import Tuple, List
 
 from battleship.board import Board
 from battleship.constants import FLEETS, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, HORIZONTAL_OPTIONS, BOARD_SIZE, HORIZONTAL,\
     SHIP_SLOT, VERTICAL
 from battleship.ship import Ship
-from battleship.utils import check_inputs, place_ships_auto  # TODO: delete only for testing
+from battleship.utils import check_inputs
 
 
 class Player:
@@ -59,16 +61,11 @@ class Player:
         return self.ships
 
     def guess(self):
-        # TODO: delete only for testing
-        return 1, 1
-        # return self.hit_pormpt()
+        return self.hit_pormpt()
 
     def place_ships(self):
-        # TODO: delete only for testing
-        place_ships_auto(self)
-
-        # self.choose_fleet_prompt()
-        # self.place_ships_prompt()
+        self.choose_fleet_prompt()
+        self.place_ships_prompt()
 
     def choose_fleet_prompt(self):
         print("=====SHIPS=====")
@@ -143,26 +140,3 @@ class Player:
             guess = (int(row), int(column))
             self.add_guess(guess)
             return guess
-
-
-class NetworkPlayer(Player):
-    def __init__(self):
-        super(NetworkPlayer, self).__init__()
-
-    def guess(self):
-        pass
-
-    def hit_slot(self, slot: Tuple[int, int]):
-        pass
-
-    def add_hit(self, hit: Tuple[int, int]):
-        pass
-
-    def get_ships(self):
-        pass
-
-    def lost(self):
-        pass
-
-    def place_ships(self):
-        pass

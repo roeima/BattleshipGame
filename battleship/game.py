@@ -1,16 +1,23 @@
+import json
+import socket
+
 from battleship.bot import SmartBot, Bot
-from battleship.constants import EASY, HARD, SINGLE_PLAYER, MULTI_PLAYER, GAMEMODE_STR, DIFFICULTY_STR, PLAYER, OTHER
+from battleship.constants import EASY, HARD, SINGLE_PLAYER, MULTI_PLAYER, GAMEMODE_STR, DIFFICULTY_STR, SERVER_HOST, \
+    SERVER_PORT
 from battleship.player import Player
 
 
 class BattleShipGame:
     def __init__(self):
+        self._init_game()
+
+    def _init_game(self):
         self.is_running = True
         self.difficulty = EASY
         self.gamemode = SINGLE_PLAYER
-        self.other_player = None
         self.player = Player()
-        self.current_player = "player"
+        self.current_player = self.player
+        self.other_player = None
 
     def run(self):
         print("WELCOME TO BATTLESHIP GAME")
@@ -36,54 +43,111 @@ class BattleShipGame:
 
         play_again = input("YOU WISH TO PLAY AGAIN (y/n) ---> ")
         if play_again.upper() in ["YES", "Y"]:
+            self._init_game()
             self.run()
 
     def _run_singleplayer(self):
         while self.is_running:
-            if self.current_player == PLAYER:
 
-                row, col = self.player.guess()
-                self.player.add_guess((row, col))
-                if self.other_player.hit_slot((row, col)):
-                    print(f"you hit a ship in ({row}, {col})")
+            row, col = self.current_player.guess()
 
-                    for ship in self.other_player.get_ships().copy():
-                        if not ship.is_alive():
-                            print(f"You destroyed {ship.name}")
-                            self.other_player.remove_ship(ship)
-                        if self.other_player.lost():
-                            print("YOU WON")
-                            break
-                else:
-                    print("YOU MISSED")
+            if self.other_player.hit_slot((row, col)):
 
-                self.current_player = OTHER
-
-            elif self.current_player == OTHER:
-                row, col = self.other_player.guess()
-
-                if self.player.hit_slot((row, col)):
+                if self.current_player != self.player:
                     self.player.print_board()
-                    print(f"{self.other_player.name} hit a ship at ({row}, {col})")
 
-                    if isinstance(self.other_player, SmartBot):
-                        self.other_player.add_hit((row, col))
+                print(f"{self.current_player.name} hit a ship at ({row}, {col})")
 
-                    for ship in self.player.get_ships().copy():
-                        if not ship.is_alive():
-                            print(f"{self.other_player.name} destroyed your {ship.name}")
-                            self.player.remove_ship(ship)
+                if isinstance(self.current_player, SmartBot):
+                    self.current_player.add_hit((row, col))
 
-                    if self.player.lost():
-                        print(f"{self.other_player.name} WON!!")
-                        break
-                else:
-                    print(f"{self.other_player.name} tried to hit ({row}, {col}) and missed")
+                for ship in self.other_player.get_ships().copy():
+                    if not ship.is_alive():
+                        print(f"{self.current_player.name} destroyed {self.other_player.name} {ship.name}")
+                        self.other_player.remove_ship(ship)
 
-                self.current_player = PLAYER
+                if self.other_player.lost():
+                    print(f"{self.current_player.name} WON!!")
+                    break
+            else:
+                print(f"{self.current_player.name} tried to hit ({row}, {col}) and missed")
+
+            if self.current_player == self.player:
+                self.current_player = self.other_player
+                self.other_player = self.player
+
+            else:
+                self.other_player = self.current_player
+                self.current_player = self.player
 
     def _run_multiplayer(self):
-        pass
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((SERVER_HOST, SERVER_PORT))
+            while self.is_running:
+                data = s.recv(2048)
+                s.send(self.parse_message(data))
+
+    def parse_message(self, message_to_parse):
+        message = json.loads(message_to_parse.decode())
+        return_msg = {}
+        if 'action' in message:
+
+            if message['action'] == 'end_game':
+                self.is_running = False
+                return_msg = {
+                    "action": "end_game",
+                    "msg": "bye!!"
+                }
+
+            if message['action'] == 'get_name':
+                name = self.player.name
+                return_msg = {
+                    "action": "get_name",
+                    "name": name
+                }
+
+            if message['action'] == 'guess':
+                row, col = self.player.guess()
+                return_msg = {
+                    "action": "guess",
+                    "row": row,
+                    "col": col,
+                    "result": True
+                }
+
+            if message['action'] == 'lost':
+                lost = self.player.lost()
+                return_msg = {
+                    "action": "lost",
+                    "lost": lost,
+                    "result": True
+                }
+
+            if message['action'] == 'hit_slot':
+                row, col = int(message['row']), int(message['col'])
+                hit = self.player.hit_slot((row, col))
+                ship_removed = False
+                ship_name = ""
+                for ship in self.player.get_ships().copy():
+                    if not ship.is_alive():
+                        ship_removed = True
+                        ship_name = ship.name
+                        self.player.remove_ship(ship)
+
+                self.player.print_board()
+
+                return_msg = {
+                    "action": "hit_slot",
+                    "hit": hit,
+                    "ship_removed": ship_removed,
+                    "ship_name": ship_name,
+                    "result": True
+                }
+
+        elif 'msg' in message:
+            print(message['msg'])
+
+        return json.dumps(return_msg).encode()
 
     def choose_gamemode(self):
         mode = input(GAMEMODE_STR)

@@ -1,14 +1,16 @@
 import random
+from typing import Tuple
 
 from battleship.constants import HORIZONTAL, VERTICAL, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, FLEETS, BOARD_SIZE
 from battleship.player import Player
 from battleship.ship import Ship
-from battleship.utils import random_placement, random_slot
+from battleship.utils import random_placement
 
 
 class Bot(Player):
     def __init__(self):
         super(Bot, self).__init__("BOT")
+        self.init_guesses()
 
     def place_ships(self):
         fleet = FLEETS[random.choice([FLEET_ONE, FLEET_TWO])]
@@ -28,11 +30,15 @@ class Bot(Player):
                     amount -= 1
 
     def random_hit(self):
-        slot = random_slot()
-        if slot in self.guesses:
-            return self.random_hit()
-        self.add_guess(slot)
+        slot = random.choice(self.guesses)
+        self.guesses.remove(slot)
         return slot
+
+    def init_guesses(self):
+        self.guesses = []
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                self.guesses.append((row, col))
 
     def guess(self):
         return self.random_hit()
@@ -43,13 +49,12 @@ class SmartBot(Bot):
         super(SmartBot, self).__init__()
         self.slots_scores = [[0]*BOARD_SIZE for _ in range(BOARD_SIZE)]
 
+    def add_hit(self, hit: Tuple[int, int]):
+        self.hits.append(hit)
+
     def calc_scores(self):
         for row, col in self.hits:
             self.slots_scores[row][col] = -1
-
-        for row, col in self.guesses:
-            if not (row, col) in self.hits:
-                self.slots_scores[row][col] = -2
 
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
@@ -60,6 +65,9 @@ class SmartBot(Bot):
                     self.slots_scores[row][col] = 5
 
                 if self.check_diagonal(row, col):
+                    self.slots_scores[row][col] = -2
+
+                if (not (row, col) in self.guesses) and self.slots_scores[row][col] == 5:
                     self.slots_scores[row][col] = -2
 
     def check_diagonal(self, row, col):
@@ -83,17 +91,18 @@ class SmartBot(Bot):
         return highscores
 
     def guess(self):
-        if not self.hits:
-            slot = self.random_hit()
-        else:
+        if self.hits:
             self.calc_scores()
+            self.print_scores()
             highscores = self.get_highscores()
             if highscores:
                 slot = random.choice(highscores)
+                self.guesses.remove(slot)
             else:
                 slot = self.random_hit()
+        else:
+            slot = self.random_hit()
 
-        self.add_guess(slot)
         return slot
 
     def print_scores(self):
