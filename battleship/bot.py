@@ -93,7 +93,6 @@ class SmartBot(Bot):
     def guess(self):
         if self.hits:
             self.calc_scores()
-            self.print_scores()
             highscores = self.get_highscores()
             if highscores:
                 slot = random.choice(highscores)

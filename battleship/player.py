@@ -1,10 +1,11 @@
+import random
 from typing import Tuple, List
 
 from battleship.board import Board
 from battleship.constants import FLEETS, SHIPS_SIZES, FLEET_ONE, FLEET_TWO, HORIZONTAL_OPTIONS, BOARD_SIZE, HORIZONTAL,\
     SHIP_SLOT, VERTICAL
 from battleship.ship import Ship
-from battleship.utils import check_inputs
+from battleship.utils import check_inputs, random_placement
 
 
 class Player:
@@ -62,8 +63,29 @@ class Player:
         return self.hit_pormpt()
 
     def place_ships(self):
-        self.choose_fleet_prompt()
-        self.place_ships_prompt()
+        auto = input("Do you want random board (y/n)? ")
+        if auto.upper() in ["YES", "Y"]:
+            self.place_ships_auto()
+        else:
+            self.choose_fleet_prompt()
+            self.place_ships_prompt()
+
+    def place_ships_auto(self):
+        fleet = random.choice([FLEETS[FLEET_ONE].copy(), FLEETS[FLEET_TWO].copy()])
+        for ship_name, amount in fleet.items():
+            while amount > 0:
+                row, column, ship_orientation = random_placement()
+                ship_size = SHIPS_SIZES[ship_name]
+                ship_slots = []
+                if ship_orientation is HORIZONTAL:
+                    ship_slots = [(row, column + x) for x in range(ship_size)]
+                elif ship_orientation is VERTICAL:
+                    ship_slots = [(row + x, column) for x in range(ship_size)]
+
+                ship = Ship(ship_name, ship_size, ship_slots)
+                if self.board.check_ship_slots(ship):
+                    self.add_ship(ship)
+                    amount -= 1
 
     def choose_fleet_prompt(self):
         print("=====SHIPS=====")
@@ -115,8 +137,7 @@ class Player:
 
                 ship = Ship(ship_name, ship_size, ship_slots)
                 if not self.board.check_ship_slots(ship):
-                    print(
-                        f"cannot place ship at ({row}, {column}) in {'HORIZONTAL' if orientation is HORIZONTAL else 'VERTICAL'}")
+                    print(f"cannot place ship at ({row}, {column}) in {'HORIZONTAL' if orientation is HORIZONTAL else 'VERTICAL'}")
                     continue
 
                 self.add_ship(ship)
